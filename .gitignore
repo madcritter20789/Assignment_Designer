@@ -1,6 +1,12 @@
 # Independent disc-launcher project
 /disc-launcher/
 
+# Upstream reference clone; the app uses the pinned npm package
+/shaders/
+
+# Publishing is configured by this repository's root workflow
+/beyblade-battle/.github/
+
 # Local Codex / UI UX Pro Max skills and tooling
 **/.agents/skills/
 **/.codex/skills/
