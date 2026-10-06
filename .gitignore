@@ -1,6 +1,15 @@
 # Independent disc-launcher project
 /disc-launcher/
 
+# Local Codex / UI UX Pro Max skills and tooling
+**/.agents/skills/
+**/.codex/skills/
+**/.claude/skills/ui-ux-pro-max/
+**/.shared/ui-ux-pro-max/
+**/ui-ux-pro-max-skill/
+**/__pycache__/
+*.py[cod]
+
 # Nested projects' Git metadata; retain this repository's configuration
 **/.git/
 /*/**/.gitignore
