@@ -1,6 +1,6 @@
 # Beyblade Arena
 
-[Play](https://madcritter20789.github.io/Assignment_Designer/) · [Source](https://github.com/madcritter20789/Assignment_Designer)
+[Source](https://github.com/madcritter20789/Assignment_Designer) · Live URL: add after your Vercel deployment.
 
 Two original sculpted tops, one stadium, and a tactile ripcord. Aim in the arena or use the direction slider. Pull right and release, or hold the launch button and release. Play versus the CPU or stage both launches yourself. Coral and teal share the same simulation. Choose Premium Toy or Retro Plastic, angled or top camera, and optional synthesized sound (off initially).
 
@@ -16,7 +16,7 @@ Two original sculpted tops, one stadium, and a tactile ripcord. Aim in the arena
 | Vite | `8.3.3` | Provides the development server, hot reload, production bundling, and local production preview. |
 | Web Audio API | Native browser feature | Generates launch sounds, collision ticks, and a quiet spin hum without downloaded audio files. Sound starts muted. |
 | Node.js | `24` in CI | Runs development tooling and the assertion-based physics checks. |
-| GitHub Actions and Pages | Repository workflow | Installs dependencies, runs tests, builds the app, and publishes the static website. |
+| GitHub Actions | Verification workflow | Installs dependencies, runs tests, and checks the production build. |
 
 Exact package versions are recorded in `package.json` and `package-lock.json`. The application runs entirely in the browser: no backend, database, login, or external game API is needed.
 
@@ -77,7 +77,7 @@ Paper's separate renderers now provide three effects: a static **Dithering** pag
 
 ### Responsive controls and fallback
 
-The public heading is now **Beyblade Arena**. The hold button sits above the launch-power label and ripcord; the disabled ripcord handle stays opaque above the teeth. The app is published from the recreated `Assignment_Designer` repository. The earlier `spin-arena` repository remains available separately.
+The public heading is now **Beyblade Arena**. The hold button sits above the launch-power label and ripcord; the disabled ripcord handle stays opaque above the teeth. The source is in the recreated `Assignment_Designer` repository; deploy it through Vercel with the root directory set to `beyblade-battle`.
 
 Choose a design separately for coral and teal before launch: **Strike** has six angular blades and a small center cap, **Guard** has eight broad rounded blades and a larger cap, and **Glide** has three curved wings. These are original cosmetic variations with shared arcade collision/spin rules. Selections preview immediately, persist through Reset/replay and theme changes, and lock when a top is staged or the battle starts. The selector also lets you choose the CPU top’s design. Geometry is cached once and disposed with the scene.
 
@@ -104,8 +104,8 @@ Paper failure uses CSS feedback while retaining the floor shader. Custom shader 
 | `src/style.css` | Desktop/mobile layouts, visual styling, focus states, and reduced-motion styles. |
 | `test.mjs` | Runnable Node assertions using the real Rapier module. |
 | `checks/browser.html` | Browser interaction, responsive layout, shader, fallback, and timing checks. |
-| `../.github/workflows/pages.yml` | Root workflow: tests, builds this app, and publishes its `dist` directory to GitHub Pages. |
-| `vercel.json` | Alternative static deployment configuration. |
+| `../.github/workflows/verify.yml` | Root workflow: tests and builds this app, without deployment. |
+| `vercel.json` | Vercel configuration: Vite, `npm run build`, and `dist`. |
 | `../.gitignore` and `../.gitattributes` | Root configuration: excludes local/generated files, disc launcher, and shader clone; standardizes text line endings. |
 | `public/` | Preserved Paper Shaders license and attribution notices. |
 
@@ -125,7 +125,7 @@ The UI/shader update adds a repeatable browser check at `http://127.0.0.1:5174/c
 - A 320-pixel browser viewport passed overflow and 44-pixel target checks. Injected reduced-motion preference and failed texture decoding passed the same interaction checks. Reduced-motion/fallback run: median 8.3 ms, 95th percentile 8.5 ms. This is viewport emulation, not physical mobile-device performance.
 - Physical phones, Safari, audible sound balance, exhaustive GPU-resource counts, and hardware-specific shader compilation failures remain unverified. Touch checks used synthetic PointerEvents; actual touch hardware remains to be tested.
 
-GitHub Pages CI runs the assertion check and build before publication. `vercel.json` retains the static deployment configuration; GitHub Pages is used because the previous Vercel team deployment reached its fair-use limit.
+GitHub Actions runs the assertion check and build without publishing. For Vercel, import `Assignment_Designer`, select root directory `beyblade-battle`, framework Vite, Node.js 24.x, install command `npm ci`, build command `npm run build`, and output directory `dist`. The included `vercel.json` supplies build/output settings. Vercel deployment and account settings are managed by the repository owner.
 
 ### UI refresh verification — October 6, 2026
 

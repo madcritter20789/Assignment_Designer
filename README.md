@@ -2,7 +2,6 @@
 
 A 3D spinning-top battle toy built with Three.js, Rapier, and Paper Shaders.
 
-- [Live app](https://madcritter20789.github.io/Assignment_Designer/)
 - [Source repository](https://github.com/madcritter20789/Assignment_Designer)
 - [App setup, controls, implementation, and verification](beyblade-battle/README.md)
 
@@ -14,17 +13,18 @@ npm ci
 npm run dev
 ```
 
-## Publish
+## Deploy with Vercel
 
-From the repository root, commit changes and push `main`:
+Import this GitHub repository in Vercel and use:
 
-```powershell
-git add .
-git commit -m "Update Beyblade Arena"
-git push origin main
-```
+- Root directory: `beyblade-battle`
+- Framework: Vite
+- Install command: `npm ci`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Node.js: 24.x
 
-The root GitHub Actions workflow installs dependencies in `beyblade-battle`, runs the Rapier assertions, builds the app, and publishes `beyblade-battle/dist` to GitHub Pages. Pages uses GitHub Actions as its publishing source. The app uses relative asset URLs, so the repository name is supported without changing the build command.
+The app includes `beyblade-battle/vercel.json` with its build and output settings. Add the Vercel live URL here after deployment. The root GitHub Actions workflow only runs tests and checks the production build; it does not publish the website.
 
 The disc launcher, upstream shader clone, dependencies, build output, local skill files, and credentials are ignored. The shader library is consumed from its pinned npm release. Paper Shaders license notices are included in the app’s `public` directory.
 
