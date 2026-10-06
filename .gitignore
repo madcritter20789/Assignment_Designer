@@ -1,0 +1,31 @@
+# Independent disc-launcher project
+/disc-launcher/
+
+# Nested projects' Git metadata; retain this repository's configuration
+**/.git/
+/*/**/.gitignore
+/*/**/.gitattributes
+/*/**/.gitmodules
+
+# Local output and dependencies
+/tmp/
+**/node_modules/
+**/dist/
+**/.vercel/
+**/.vite/
+**/.cache/
+**/.npm/
+**/.pnpm-store/
+**/.yarn/cache/
+**/coverage/
+**/qa.html
+*.tsbuildinfo
+*.log
+
+# Local credentials and machine files
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+Desktop.ini
