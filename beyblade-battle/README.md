@@ -1,6 +1,6 @@
 # Beyblade Arena
 
-[Source](https://github.com/madcritter20789/Assignment_Designer) · Live URL: add after your Vercel deployment.
+[Source](https://github.com/madcritter20789/Assignment_Designer) · [Live arena](https://assignment-designer-theta.vercel.app).
 
 Two original sculpted tops, one stadium, and a tactile ripcord. Aim in the arena or use the direction slider. Pull right and release, or hold the launch button and release. Play versus the CPU or stage both launches yourself. Coral and teal share the same simulation. Choose Premium Toy or Retro Plastic, angled or top camera, and optional synthesized sound (off initially).
 
@@ -36,9 +36,9 @@ Run these commands from the `beyblade-battle` directory. `npm ci` installs the l
 
 ## How to play
 
-1. Select **Versus CPU** or **Launch both**.
+1. Open **Tops & settings** on mobile. Choose a preview card for each top and select **Versus CPU** or **Launch both**.
 2. Tap the arena, move the pointer, or adjust the **Direction** slider to aim.
-3. Drag the ripcord right and release, or hold **Hold to launch** and release. More pull or hold time gives more power.
+3. Hold **Hold to launch** and release. One second reaches full power. For the drag alternative, open **Prefer the ripcord?**, pull right and release; distance determines power.
 4. In **Launch both**, configure coral first, then teal. Both tops launch together after the second launch is staged. In CPU mode, the opponent chooses its launch settings automatically.
 5. The round ends when a top loses its spin, exits through a pocket, or the 20-second limit is reached. Select **Battle again** to replay.
 
@@ -50,7 +50,7 @@ Vanilla JavaScript, Three.js 0.186.1, Rapier 0.21.0, Paper Shaders 0.0.81, and V
 
 ### 3D models and materials
 
-The tops are built in code from cylinders, cones, torus rings, and six repeated extruded blade shapes. Both use shared geometry, with coral and teal accents. The stadium combines a circular floor, molded rails, and two exit pockets. A hemisphere light and a directional light provide lighting and shadows.
+The tops are built in code from cylinders, cones, torus rings, and repeated extruded blade shapes. Both use shared geometry, with coral and teal accents. The stadium combines a circular floor, molded rails, and two exit pockets. A hemisphere light and a directional light provide lighting and shadows.
 
 Premium Toy and Retro Plastic reuse the same scene. Switching themes updates material colors, lighting, CSS, and shader palettes without restarting the round. Camera buttons choose an angled or top-down view.
 
@@ -77,17 +77,13 @@ Paper's separate renderers now provide three effects: a static **Dithering** pag
 
 ### Responsive controls and fallback
 
-The public heading is now **Beyblade Arena**. The hold button sits above the launch-power label and ripcord; the disabled ripcord handle stays opaque above the teeth. The source is in the recreated `Assignment_Designer` repository; deploy it through Vercel with the root directory set to `beyblade-battle`.
+Desktop has settings and animated top previews on the left, a prominent arena in the center, and launch/status controls on the right. Tablets put the arena above two panels. Phones show the arena first, followed by a collapsed **Tops & settings** disclosure and a compact launch panel. Mode and arena style use explicit segmented buttons instead of dropdowns. The 48 px mobile hold button sits beside the angle control; the secondary ripcord is expandable. Utility controls remain in the document without covering focus.
 
-Choose a design separately for coral and teal before launch: **Strike** has six angular blades and a small center cap, **Guard** has eight broad rounded blades and a larger cap, and **Glide** has three curved wings. These are original cosmetic variations with shared arcade collision/spin rules. Selections preview immediately, persist through Reset/replay and theme changes, and lock when a top is staged or the battle starts. The selector also lets you choose the CPU top’s design. Geometry is cached once and disposed with the scene.
+Choose original **Strike** (six angular blades), **Guard** (eight rounded blades), or **Glide** (three curved wings) separately for coral and teal. Lightweight SVG preview cards rotate slowly without additional WebGL contexts. Selection updates the 3D top immediately, persists through Reset/replay and theme changes, and locks once staged. These are cosmetic choices with identical battle rules. Preview motion can be paused and stops during battles, pause, tab hiding, and reduced motion.
 
-The design update passed real-Rapier assertions, production build, and headless Edge/software-WebGL checks at desktop, 390 px, and 320 px reduced-motion/fallback. Checks cover all three choices for both tops, staged/battle locks, selection retention after Reset, and launch-button placement. Layout checks from 320 px to 1440 px, landscape, and doubled root text showed no horizontal overflow; physical-phone testing is still outstanding.
+Instructions follow the actual state: save coral first in Launch both, then release teal to start both. Inactive launch controls disappear during countdown, battle, pause, and results. Separate scoreboard labels distinguish ready, staged, automatic CPU setup, and remaining spin; the timer reports seconds left. Results explain the finish and provide immediate replay.
 
-Desktop keeps launch controls beside the arena; tablets use a two-column launch dock and phones stack controls. A full-width hold button is the primary launch action, with the ripcord as an alternative. Utility controls stay in the document so they cannot cover focused content. Mobile launch scrolls the battle into view and hides inactive setup controls until replay. The direction slider and both launch methods share the same rules and cancellation paths.
-
-The UI refresh uses the UI UX Pro Max and UI UX Designer mobile/user-flow guidance: clearer type hierarchy, live round progress, contextual launch instructions, a filling hold-button power indicator, saved power when preparing teal, and expandable rules/keyboard help. The result explains the finish and offers immediate replay. No additional runtime dependencies were introduced.
-
-Round flows: **CPU:** aim coral → hold/pull → release → simultaneous battle → result → replay. **Launch both:** aim/charge coral → stage coral → aim/charge teal → stage teal → simultaneous battle → result → replay. Escape or interrupted input cancels a charge; Reset returns either flow to coral setup.
+The refresh follows UI UX Pro Max and UI UX Designer mobile/user-flow guidance and the research recorded in [UI-REVIEW.md](UI-REVIEW.md). All visible controls have at least 44 px targets, visible focus, and responsive spacing. No runtime dependency was added.
 
 Paper failure uses CSS feedback while retaining the floor shader. Custom shader compilation failure is reported and uses basic materials; that fallback does not satisfy the full shader criterion. WebGL/physics initialization failure or 3D context loss displays Retry.
 
@@ -101,6 +97,7 @@ Paper failure uses CSS feedback while retaining the floor shader. Custom shader 
 | `src/scene.js` | Three.js renderer, procedural geometry, materials, lighting, cameras, and particles. |
 | `src/effects.js` | Theme palettes, custom floor GLSL, and the three Paper shader integrations. |
 | `src/sound.js` | Synthesized sound effects, audio activation, muting, and cleanup. |
+| `src/top-previews.js` | Original SVG silhouettes and accessible design-selection cards. |
 | `src/style.css` | Desktop/mobile layouts, visual styling, focus states, and reduced-motion styles. |
 | `test.mjs` | Runnable Node assertions using the real Rapier module. |
 | `checks/browser.html` | Browser interaction, responsive layout, shader, fallback, and timing checks. |
@@ -109,29 +106,18 @@ Paper failure uses CSS feedback while retaining the floor shader. Custom shader 
 | `../.gitignore` and `../.gitattributes` | Root configuration: excludes local/generated files, disc launcher, and shader clone; standardizes text line endings. |
 | `public/` | Preserved Paper Shaders license and attribution notices. |
 
-## Verification — October 6, 2026
+## Verification — October 8, 2026
 
-The UI/shader update adds a repeatable browser check at `http://127.0.0.1:5174/checks/browser.html` after `npm run dev`. Append `?width=320&reduced&fallback` for the smallest layout, injected reduced motion, and a forced Paper-rim texture failure. These are test-only browser scenarios; the main toy contains no test controls. The harness is not part of the production build.
+Run the repeatable browser harness at `http://127.0.0.1:5174/checks/browser.html` after `npm run dev`. Append `?width=320&reduced&fallback` for the smallest layout, injected reduced motion, and forced Paper texture failure. The harness is not bundled in production.
 
-- Updated desktop check passed: all three Paper shader canvases, custom floor shader, aim slider, hold-button launch/cancellation, both modes, touch-pointer cancellation/outside release, pause, theme/camera preservation, reset, bounded canvas count, hidden-tab pause, and Retry. Updated desktop RAF intervals: median 8.3 ms / p95 8.4 ms over 180 frames on in-app Chromium.
-- Updated 320-pixel iframe viewport with reduced motion and forced rim failure passed the same checks, including overflow and 44-pixel targets. Frame intervals: median 8.3 ms / p95 8.5 ms. This is browser emulation, not a physical-phone measurement.
-- Actual mouse interaction in a 390 × 844 emulated browser viewport verified the larger hold/release button, automatic battle framing, and fixed Pause control. This remains desktop browser input, not physical touch hardware.
+- Real-Rapier Node assertions and the production build pass. Rules cover launch/aim bounds, staging, collision response, bounded damage, spin-out, ring-out, simultaneous elimination, timeout, pause, and reset.
+- Headless Microsoft Edge with software WebGL passed the browser harness at desktop, 390 px, and 320 px reduced-motion/fallback. Checks cover both modes, six selectable previews, all design choices, hold/drag cancellation and outside release, keyboard input, synthetic touch input, stage locks, theme/camera preservation, muted audio, repeated reset, bounded canvas count, hidden-tab pause, and context-loss Retry.
+- Actual Playwright keyboard input staged both tops, completed a spin-out battle, and replayed. Preview rotation, user-controlled preview pause, reduced motion, and paused-state messaging were checked separately.
+- Layouts at 320×740, 375×812, 390×844, 768×1024, 1024×768, 1100×800, 1440×900, 1920×1080, and 844×390 had no horizontal overflow and visible controls at least 44 px high. Doubling root text exposed a 320 px camera-toolbar overflow; allowing that toolbar to wrap fixed the issue. Mobile arena begins approximately 165 px down instead of the previous 597 px at 390×844.
+- Measured software-rendered RAF intervals over 90 samples: desktop median 66.7 ms / p95 175.1 ms; 390 px median 33.4 ms / p95 75.0 ms; 320 px reduced-motion/fallback median 25.0 ms / p95 33.4 ms. These validate behavior, not hardware performance. Physical phones, Safari, screen readers, and audible sound balance remain untested.
+- Rapier's bundled WASM makes the main bundle approximately 5 MB / 1.85 MB gzip; Vite reports a size advisory.
 
-- `npm test` passes with the real Rapier WASM module: charge/aim bounds, staged launches, opposing directions, collision reversal, bounded damage, spin-out, ring-out, simultaneous elimination, timeout, pause, reset.
-- Production build passes. Rapier's bundled WASM makes the main bundle approximately 5 MB / 1.85 MB gzip; the build reports a size advisory.
-- GitHub Pages CI passed installation, tests, build, and deployment. The live URL loaded without application warnings/errors; both shader paths were active. Actual live ripcord drags staged coral then launched teal at 64% power; pause, theme and camera changes preserved the round. Production preview also produced a ring-out result and replay control.
-- Tested Windows Codex in-app Chromium: actual mouse ripcord drag, CPU launch, and both shader paths. Browser integration checks exercised keyboard staging of both tops, Escape/blur cancellation, synthetic touch-pointer cancellation and outside-track release, pause, theme/camera preservation, reset, ten repeated resets without additional canvases, hidden-tab pause, and context-loss Retry.
-- Desktop battle RAF intervals: median 8.4 ms, 95th percentile 16.9 ms over 180 frames. These are observed frame intervals, not a GPU benchmark or guarantee on other hardware.
-- A 320-pixel browser viewport passed overflow and 44-pixel target checks. Injected reduced-motion preference and failed texture decoding passed the same interaction checks. Reduced-motion/fallback run: median 8.3 ms, 95th percentile 8.5 ms. This is viewport emulation, not physical mobile-device performance.
-- Physical phones, Safari, audible sound balance, exhaustive GPU-resource counts, and hardware-specific shader compilation failures remain unverified. Touch checks used synthetic PointerEvents; actual touch hardware remains to be tested.
-
-GitHub Actions runs the assertion check and build without publishing. For Vercel, import `Assignment_Designer`, select root directory `beyblade-battle`, framework Vite, Node.js 24.x, install command `npm ci`, build command `npm run build`, and output directory `dist`. The included `vercel.json` supplies build/output settings. Vercel deployment and account settings are managed by the repository owner.
-
-### UI refresh verification — October 6, 2026
-
-- Real Rapier Node assertions and the Vite production build pass. Browser checks now include the active preparation step and coral’s saved-power guidance.
-- Headless Microsoft Edge with software WebGL passed mouse/keyboard/synthetic touch interaction checks, both modes, pause, theme/camera preservation, repeated reset, context-loss handling, and reduced-motion/Paper fallback. Layouts at 320×740, 390×844, 768×1024, 1024×768, 1440×1000, and 844×390 had no horizontal overflow and controls of at least 44 px. A 390 px viewport with 200% root text also had no overflow.
-- Software-rendered timing is substantially slower than the earlier hardware browser run: desktop median 75.0 ms / p95 191.7 ms; 390 px median 33.4 ms / p95 75.0 ms; 320 px reduced-motion/fallback median 25.0 ms / p95 33.5 ms (180 RAF intervals each). These runs validate behavior, not desktop/mobile hardware performance. Physical-phone touch, Safari, and assistive-technology testing remain outstanding.
+GitHub Actions checks tests/build without publishing. Vercel uses root directory `beyblade-battle`, framework Vite, Node.js 24.x, install `npm ci`, build `npm run build`, and output `dist`. The included `vercel.json` supplies build/output settings; the owner manages deployment settings.
 
 ## Submission note
 

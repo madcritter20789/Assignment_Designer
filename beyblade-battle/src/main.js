@@ -3,11 +3,16 @@ import { createBattle, boundAim, clamp, SETTINGS } from './battle.js';
 import { createScene } from './scene.js';
 import { mountRim, mountAtmosphere } from './effects.js';
 import { createSound } from './sound.js';
+import { designCards, TOP_DESIGNS } from './top-previews.js';
 
 const $ = id => document.getElementById(id), stage = $('stage'), handle = $('ripcord');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const audio = createSound(), listeners = [];
-let battle, scene, rim, atmosphere, raf, closed = false, failed = false, aim = 0, theme = 'premium', pointer = null, holdPointer = null, pull = 0, keyStarted = null, energy = 0, last = 0, accumulator = 0, lastRim = 0, lastUi = 0;
+const designs = ['strike', 'guard'], desktop = matchMedia('(min-width: 1100px)');
+$('design-a').innerHTML = designCards(0, designs[0]); $('design-b').innerHTML = designCards(1, designs[1]);
+$('round-setup').open = desktop.matches;
+const designButtons = [...document.querySelectorAll('[data-design]')], modeButtons = [...document.querySelectorAll('[data-mode]')], themeButtons = [...document.querySelectorAll('button[data-theme]')];
+let battle, scene, rim, atmosphere, raf, closed = false, failed = false, aim = 0, mode = 'cpu', theme = 'premium', previewsPaused = false, pointer = null, holdPointer = null, pull = 0, keyStarted = null, energy = 0, last = 0, accumulator = 0, lastRim = 0, lastUi = 0;
 const on = (element, event, callback, options) => { element.addEventListener(event, callback, options); listeners.push(() => element.removeEventListener(event, callback, options)); };
 const ready = () => battle && !failed;
 const settingUp = () => ready() && !battle.state.paused && ['setupA', 'setupB'].includes(battle.state.phase);
@@ -21,24 +26,24 @@ function failure(message, fatal) {
   $('status').textContent = message;
   if (!fatal) { stage.dataset.shaderFallback = 'true'; return; }
   failed = true; cancelPull(); battle?.setPaused(true); audio.update(0, false, true);
-  overlay('A SMALL INTERRUPTION', 'Let’s try that again.', message, 'Retry ↗', 'retry'); sync();
+  overlay('ARENA INTERRUPTED', 'Try again', message, 'Retry', 'retry'); sync();
 }
 function reset() {
   if (!ready()) return;
-  cancelPull(); battle.reset($('mode').value); scene.reset(); aim = 0; energy = 0; accumulator = 0; last = 0;
-  $('overlay').hidden = true; $('status').textContent = 'Fresh round. Aim coral and pull the ripcord.'; sync();
+  cancelPull(); battle.reset(mode); scene.reset(); aim = 0; energy = 0; accumulator = 0; last = 0;
+  $('overlay').hidden = true; $('status').textContent = 'Fresh round. Aim coral, hold for power, and release.'; sync();
 }
 function pause(value) {
   if (!ready()) return;
   cancelPull(); battle.setPaused(value); accumulator = 0; last = 0;
-  if (value) overlay('TAKING A BREATHER', 'Hold that thought.', 'Your battle will be right here.', 'Keep playing ↗', 'resume');
+  if (value) overlay('ROUND PAUSED', 'Paused', 'Your settings and spin are saved.', ['setupA', 'setupB'].includes(battle.state.phase) ? 'Resume setup' : battle.state.phase === 'finished' ? 'View result' : 'Resume battle', 'resume');
   else { $('overlay').hidden = true; if (battle.state.phase === 'finished') showResult(); }
   audio.update(0, false, value); rim?.update(energy, value, motion.matches, theme, battle.state.result?.winner ?? null); sync();
 }
 function showResult() {
   const result = battle.state.result, winner = result.winner === null ? 'A perfect tie.' : result.winner === 0 ? 'Coral takes the arena.' : 'Teal takes the arena.';
   const explanation = { 'Spin-out': 'A top ran out of spin.', 'Ring-out': 'A top left through an exit pocket.', 'Spin remaining': 'Time’s up. Remaining spin decides the round.' }[result.reason] || 'Both tops reached the finish together.';
-  overlay(result.reason.toUpperCase(), winner, `${explanation} ${battle.state.hits} ${battle.state.hits === 1 ? 'clash' : 'clashes'}.`, 'Battle again ↗', 'again');
+  overlay(result.reason.toUpperCase(), winner, `${explanation} ${battle.state.hits} ${battle.state.hits === 1 ? 'clash' : 'clashes'}.`, 'Battle again', 'again');
   if ([document.body, stage, handle, hold].includes(document.activeElement)) $('overlay-action').focus({ preventScroll: true });
   $('status').textContent = `${winner} ${result.reason}. ${battle.state.hits} ${battle.state.hits === 1 ? 'clash' : 'clashes'}.`;
 }
@@ -84,13 +89,16 @@ on(stage, 'keydown', keyboardDown); on(handle, 'keydown', keyboardDown); on(hold
 function keyboardUp(event) { if (event.code === 'Space' || (event.code === 'Enter' && event.target === hold)) { event.preventDefault(); if (keyStarted !== null && holdPointer === null) commitPull(); } }
 on(stage, 'keyup', keyboardUp); on(handle, 'keyup', keyboardUp); on(hold, 'keyup', keyboardUp);
 on(stage, 'focusout', cancelPull); on(handle, 'blur', cancelPull);
-on($('mode'), 'change', reset);
-['design-a', 'design-b'].forEach((id, index) => on($(id), 'change', () => {
+modeButtons.forEach(button => on(button, 'click', () => { if (button.disabled || mode === button.dataset.mode) return; mode = button.dataset.mode; reset(); }));
+designButtons.forEach(button => on(button, 'click', () => {
+  const index = Number(button.dataset.index);
   if (!settingUp() || battle.state.launches[index]) return;
-  cancelPull(); scene.setDesign(index, $(id).value);
-  $('status').textContent = `${index ? 'Teal' : 'Coral'} design changed to ${$(id).selectedOptions[0].textContent}.`;
+  cancelPull(); designs[index] = button.dataset.design; scene.setDesign(index, designs[index]);
+  $('status').textContent = `${index ? 'Teal' : 'Coral'} design: ${TOP_DESIGNS[designs[index]].name}.`; sync();
 }));
-on($('theme'), 'change', () => { theme = $('theme').value; document.body.dataset.theme = theme; scene?.setTheme(theme); rim?.update(energy, battle?.state.paused || false, motion.matches, theme, battle?.state.result?.winner ?? null); });
+themeButtons.forEach(button => on(button, 'click', () => { theme = button.dataset.theme; document.body.dataset.theme = theme; scene?.setTheme(theme); rim?.update(energy, battle?.state.paused || false, motion.matches, theme, battle?.state.result?.winner ?? null); sync(); }));
+on($('preview-motion'), 'click', () => { previewsPaused = !previewsPaused; sync(); });
+on(desktop, 'change', () => { $('round-setup').open = desktop.matches; });
 ['angled', 'top'].forEach(view => on($(view), 'click', () => { scene?.setView(view, motion.matches); $('angled').ariaPressed = String(view === 'angled'); $('top').ariaPressed = String(view === 'top'); }));
 on($('reset'), 'click', reset); on($('pause'), 'click', () => pause(!battle.state.paused));
 on($('overlay-action'), 'click', () => {
@@ -99,19 +107,29 @@ on($('overlay-action'), 'click', () => {
   if (action === 'again') { reset(); stage.focus(); }
   if (action === 'resume') { pause(false); stage.focus(); }
 });
-on($('sound'), 'click', async () => { const enabled = await audio.toggle(); $('sound').ariaPressed = String(enabled); $('sound').innerHTML = `<span aria-hidden="true">♪</span> Sound ${enabled ? 'on' : 'off'}`; if (enabled) audio.event('pull'); });
+on($('sound'), 'click', async () => { const enabled = await audio.toggle(); $('sound').ariaPressed = String(enabled); $('sound').textContent = `Sound ${enabled ? 'on' : 'off'}`; if (enabled) audio.event('pull'); });
 on(window, 'blur', cancelPull);
 on(document, 'visibilitychange', () => { cancelPull(); if (document.hidden && ready() && !battle.state.paused) pause(true); last = 0; accumulator = 0; });
 on(motion, 'change', () => { if (scene) scene.setView($('top').ariaPressed === 'true' ? 'top' : 'angled', motion.matches); });
 
 function sync() {
   const state = battle?.state, power = charge(), setup = settingUp();
-  handle.disabled = !setup; $('reset').disabled = !ready(); $('pause').disabled = !ready(); $('mode').disabled = !ready() || ['countdown', 'battling'].includes(state?.phase);
+  handle.disabled = !setup; $('reset').disabled = !ready(); $('pause').disabled = !ready();
+  modeButtons.forEach(button => { button.disabled = !ready() || state.paused || ['setupB', 'countdown', 'battling'].includes(state.phase); button.ariaPressed = String(button.dataset.mode === mode); });
+  themeButtons.forEach(button => { button.ariaPressed = String(button.dataset.theme === theme); });
+  designButtons.forEach(button => { const index = Number(button.dataset.index); button.disabled = !setup || !!state?.launches[index]; button.ariaPressed = String(designs[index] === button.dataset.design); });
+  document.body.dataset.phase = state?.phase || 'loading'; document.body.dataset.paused = String(state?.paused || false);
+  document.body.dataset.previewMotion = setup && !previewsPaused && !motion.matches && !document.hidden ? 'running' : 'paused';
+  $('preview-motion').disabled = motion.matches || !setup; $('preview-motion').ariaPressed = String(previewsPaused || motion.matches || !setup);
+  $('preview-motion').textContent = motion.matches ? 'Motion reduced' : !setup ? 'Previews paused' : previewsPaused ? 'Play previews' : 'Pause previews';
+  $('setup-summary').textContent = `${mode === 'cpu' ? 'CPU' : 'Both'} · ${theme === 'premium' ? 'Premium' : 'Retro'}`;
+  $('mode-description').textContent = mode === 'cpu' ? 'You launch coral; the CPU launches teal.' : 'Save coral, then teal. Both launch together.';
+  $('teal-design-label').textContent = `Teal design${mode === 'cpu' ? ' · CPU' : ''}`;
+  $('launch-setup').hidden = !setup;
   hold.disabled = !setup; $('aim').disabled = !setup || pointer !== null || keyStarted !== null;
-  ['design-a', 'design-b'].forEach((id, index) => { $(id).disabled = !setup || !!state?.launches[index]; });
   $('aim').value = String(Math.round(aim * 180 / Math.PI)); $('aim-value').textContent = `${Math.round(aim * 180 / Math.PI)}°`;
   stage.dataset.phase = state?.phase || 'loading';
-  $('pause').ariaPressed = String(state?.paused || false); $('pause').innerHTML = state?.paused ? '<span aria-hidden="true">▷</span> Resume' : '<span aria-hidden="true">Ⅱ</span> Pause';
+  $('pause').ariaPressed = String(state?.paused || false); $('pause').textContent = state?.paused ? 'Resume' : 'Pause';
   handle.style.transform = `translateX(${power * 140}px)`;
   $('charge-meter').firstElementChild.style.transform = `scaleX(${power})`; $('charge-meter').setAttribute('aria-valuenow', String(Math.round(power * 100))); $('pull-value').textContent = `${Math.round(power * 100)}%`;
   hold.classList.toggle('charging', keyStarted !== null);
@@ -119,32 +137,34 @@ function sync() {
   const teal = state?.phase === 'setupB';
   document.querySelector('.launch-dock').dataset.top = teal ? 'teal' : 'coral';
   document.querySelector('.play-steps').style.setProperty('--active', teal ? 'var(--teal)' : 'var(--coral)');
-  $('dock-label').textContent = teal ? 'SECOND LAUNCH / TEAL' : 'YOUR LAUNCH / CORAL';
+  $('dock-label').textContent = state?.paused ? 'ON HOLD' : setup ? `YOUR TURN · ${teal ? 'TEAL' : 'CORAL'}` : state?.phase === 'finished' ? 'ROUND COMPLETE' : 'ROUND IN PROGRESS';
   handle.style.background = teal ? 'var(--teal)' : 'var(--coral)';
   hold.style.setProperty('--launch-color', teal ? 'var(--teal)' : 'var(--coral)');
   hold.firstChild.textContent = `Hold to ${state?.mode === 'both' ? 'stage' : 'launch'}`;
   handle.ariaLabel = `Pull ripcord to ${state?.mode === 'both' ? 'stage' : 'launch'} ${teal ? 'teal' : 'coral'}`;
-  $('top-b-label').textContent = `02 / TEAL${state?.mode === 'cpu' ? ' · CPU' : ''}`;
+  $('top-b-label').textContent = `Teal${mode === 'cpu' ? ' · CPU' : ''}`;
   if (state) {
-    const labels = { setupA: 'Aim coral to begin', setupB: 'Coral staged · aim teal', countdown: 'Ready… let it rip!', battling: 'Last top spinning wins', finished: state.result?.reason };
-    $('phase-label').textContent = state.paused ? 'PAUSED. MOMENTUM SAVED.' : labels[state.phase];
-    $('round-label').textContent = state.phase === 'battling' ? `${Math.max(0, 20 - state.time).toFixed(1)}s / SPIN REMAINING` : state.paused ? 'Round paused' : state.phase === 'setupB' ? 'Coral staged · teal next' : state.phase === 'finished' ? 'Round complete' : 'Ready to launch';
+    const labels = { setupA: 'Aim coral and choose your power.', setupB: 'Coral saved · prepare teal.', countdown: 'Both tops launching together.', battling: 'Battle underway', finished: state.result?.reason };
+    $('phase-label').textContent = state.paused ? 'Round paused · settings saved' : labels[state.phase];
+    $('round-label').textContent = state.paused ? 'Paused' : state.phase === 'battling' ? `${Math.max(0, 20 - state.time).toFixed(1)}s left` : state.phase === 'setupB' ? 'Coral saved' : state.phase === 'countdown' ? 'Launching…' : state.phase === 'finished' ? 'Round complete' : 'Ready to launch';
     const activeStep = state.phase === 'setupA' ? 0 : state.phase === 'setupB' ? 1 : 2;
     ['step-a', 'step-b', 'step-battle'].forEach((id, index) => {
       $(id).classList.toggle('complete', index < activeStep);
       if (index === activeStep) $(id).setAttribute('aria-current', 'step'); else $(id).removeAttribute('aria-current');
     });
-    $('step-b').lastElementChild.textContent = state.mode === 'cpu' ? 'CPU is ready' : 'Prepare teal';
-    $('dock-title').textContent = state.paused ? 'Take your time.' : state.phase === 'battling' ? 'Let them battle.' : state.phase === 'countdown' ? 'Here we go!' : state.phase === 'finished' ? 'One more round?' : teal ? 'Teal, you’re up.' : 'Make your move.';
-    $('mode-hint').textContent = state.phase === 'finished' ? 'Use Battle again in the arena to replay.' : state.phase === 'battling' ? 'Spin-out or ring-out ends the round.' : state.mode === 'cpu' ? 'The CPU launches with you.' : teal ? `Coral is staged at ${Math.round(state.launches[0].power * 100)}% power.` : 'Stage coral first, then prepare teal.';
-    $('power-hint').textContent = power >= .99 ? 'Full power! Release when ready.' : power >= .08 ? `Release to ${state.mode === 'both' ? 'stage' : 'launch'} at ${Math.round(power * 100)}% power.` : 'Hold for power. Release to launch.';
-    $('hit-label').textContent = `${String(state.hits).padStart(2, '0')} CLASHES`;
+    $('step-b').lastElementChild.textContent = mode === 'cpu' ? 'CPU auto-launch' : 'Teal';
+    $('dock-title').textContent = state.paused ? 'Round paused' : state.phase === 'battling' ? 'Watch the battle' : state.phase === 'countdown' ? 'Launching both' : state.phase === 'finished' ? 'Ready for a rematch?' : teal ? 'Prepare teal' : 'Launch coral';
+    $('mode-hint').textContent = state.paused ? 'Reset starts a fresh round.' : state.phase === 'finished' ? 'Reset lets you change designs and mode.' : state.phase === 'battling' ? 'At 20 seconds, higher remaining spin wins.' : state.phase === 'countdown' ? 'Directions and powers saved.' : mode === 'cpu' ? 'The CPU sets teal’s aim and power.' : teal ? `Coral saved at ${Math.round(state.launches[0].power * 100)}% power.` : 'Teal is next. Both tops launch together.';
+    $('power-hint').textContent = power >= .99 ? `Full power. Release to ${mode === 'both' ? teal ? 'start both' : 'save coral' : 'launch'}.` : power >= .08 ? `Release at ${Math.round(power * 100)}% power.` : 'Hold for up to 1 second. Release to commit.';
+    $('selection-note').textContent = state.paused ? 'Resume to edit an unstaged top.' : state.phase === 'setupB' ? 'Coral is saved. You can still choose teal.' : state.phase === 'setupA' ? 'Choose either design before launching.' : 'Designs locked for this round. Reset to change them.';
+    $('hit-label').textContent = `${state.hits} ${state.hits === 1 ? 'clash' : 'clashes'}`;
     state.tops.forEach((top, index) => {
       const letter = index ? 'b' : 'a', percent = Math.round(top.energy * 100), staged = !!state.launches[index] && ['setupA', 'setupB', 'countdown'].includes(state.phase);
-      $('spin-' + letter).textContent = ['setupA', 'setupB'].includes(state.phase) ? staged ? 'STAGED' : 'READY' : `${percent}%`;
+      $('spin-' + letter).textContent = ['setupA', 'setupB', 'countdown'].includes(state.phase) ? staged ? 'STAGED' : index && mode === 'cpu' ? 'AUTO' : 'READY' : `${percent}% spin`;
+      $('meter-' + letter).setAttribute('aria-valuetext', ['setupA', 'setupB', 'countdown'].includes(state.phase) ? staged ? 'Launch staged' : 'Ready, not launched' : `${percent} percent spin remaining`);
       $('meter-' + letter).setAttribute('aria-valuenow', String(percent)); $('meter-' + letter).firstElementChild.style.transform = `scaleX(${top.energy})`;
     });
-    $('instructions').textContent = state.paused ? 'Momentum saved. Resume when you’re ready.' : state.phase === 'battling' ? 'Watch the clash. Last top spinning wins.' : state.phase === 'countdown' ? 'Both tops are ready. Let it rip!' : state.phase === 'finished' ? 'Ready for a rematch? Battle again.' : teal ? 'Set teal’s direction, then hold to stage.' : 'Tap the arena or use the slider to aim.';
+    $('instructions').textContent = state.paused ? 'Resume to continue. Your settings and spin are saved.' : state.phase === 'battling' ? 'Spin-out or ring-out wins the round.' : state.phase === 'countdown' ? 'Both tops will launch together.' : state.phase === 'finished' ? 'Choose Battle again in the arena to replay.' : teal ? 'Aim teal. Hold, then release to start both tops.' : mode === 'both' ? 'Aim coral. Hold, then release to save its launch.' : 'Aim in the arena or adjust the angle. Hold, then release.';
   }
   stage.style.setProperty('--energy', Math.max(power, energy).toFixed(2));
 }
@@ -174,9 +194,9 @@ function frame(timestamp) {
 async function initialize() {
   try {
     scene = createScene($('scene'), failure); scene.setTheme(theme);
-    scene.setDesign(0, $('design-a').value); scene.setDesign(1, $('design-b').value);
+    scene.setDesign(0, designs[0]); scene.setDesign(1, designs[1]);
     atmosphere = mountAtmosphere($('paper-background'), $('paper-surface'));
-    battle = await createBattle(); battle.reset($('mode').value);
+    battle = await createBattle(); battle.reset(mode);
     if (closed) { battle.dispose(); scene.dispose(); return; }
     mountRim($('paper-rim')).then(result => { if (closed) result.dispose(); else rim = result; });
     $('overlay').hidden = true; sync(); raf = requestAnimationFrame(frame);
@@ -185,4 +205,5 @@ async function initialize() {
 function dispose() { closed = true; cancelAnimationFrame(raf); listeners.forEach(remove => remove()); scene?.dispose(); rim?.dispose(); atmosphere?.dispose(); battle?.dispose(); audio.dispose(); }
 on(window, 'pagehide', event => { if (!event.persisted) dispose(); else { cancelPull(); if (ready()) pause(true); } });
 if (import.meta.hot) import.meta.hot.dispose(dispose);
+sync();
 void initialize();

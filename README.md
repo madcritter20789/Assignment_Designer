@@ -2,8 +2,11 @@
 
 A 3D spinning-top battle toy built with Three.js, Rapier, and Paper Shaders.
 
+- [Live arena](https://assignment-designer-theta.vercel.app)
 - [Source repository](https://github.com/madcritter20789/Assignment_Designer)
 - [App setup, controls, implementation, and verification](beyblade-battle/README.md)
+
+The interface centers the stadium between desktop side panels, with mobile-first arena placement, animated design previews, and compact launch controls.
 
 ## Tech stack
 
@@ -40,7 +43,7 @@ Import this GitHub repository in Vercel and use:
 - Output directory: `dist`
 - Node.js: 24.x
 
-The app includes `beyblade-battle/vercel.json` with its build and output settings. Add the Vercel live URL here after deployment. The root GitHub Actions workflow only runs tests and checks the production build; it does not publish the website.
+The app includes `beyblade-battle/vercel.json` with its build and output settings. The root GitHub Actions workflow only runs tests and checks the production build; it does not publish the website.
 
 The disc launcher, upstream shader clone, dependencies, build output, local skill files, and credentials are ignored. The shader library is consumed from its pinned npm release. Paper Shaders license notices are included in the app’s `public` directory.
 
