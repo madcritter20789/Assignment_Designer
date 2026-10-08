@@ -85,7 +85,7 @@ export function createScene(canvas, onFailure) {
   const particles = [];
   const particleGeometry = new THREE.SphereGeometry(.03, 6, 4), particleMaterial = new THREE.MeshBasicMaterial({ color: '#e7ab63' });
   for (let i = 0; i < 32; i++) { const object = mesh(particleGeometry, particleMaterial); object.visible = false; object.castShadow = false; particles.push({ object, age: 1, velocity: new THREE.Vector3() }); }
-  let theme = 'premium', targetView = 'angled', view = 'angled', cameraStarted = 0, cameraFrom = new THREE.Vector3(), failure = false;
+  let theme = 'premium', targetView = 'angled', cameraStarted = 0, cameraFrom = new THREE.Vector3(), failure = false;
   const views = { angled: new THREE.Vector3(4, 12, 13), top: new THREE.Vector3(0, 18, .001) };
   camera.position.copy(views.angled); camera.lookAt(0, 0, 0);
   renderer.debug.onShaderError = () => {
@@ -112,7 +112,7 @@ export function createScene(canvas, onFailure) {
     setTheme,
     // ponytail: designs share arcade colliders and spin rules; variation is visual.
     setDesign(index, name) { Object.entries(tops[index].variants).forEach(([key, group]) => { group.visible = key === name; }); },
-    setView(value, reduced) { view = value; targetView = value; cameraFrom.copy(camera.position); cameraStarted = .0001; if (reduced) { camera.position.copy(views[value]); camera.lookAt(0, 0, 0); cameraStarted = 0; } },
+    setView(value, reduced) { targetView = value; cameraFrom.copy(camera.position); cameraStarted = .0001; if (reduced) { camera.position.copy(views[value]); camera.lookAt(0, 0, 0); cameraStarted = 0; } },
     aim(event, index) {
       const rect = canvas.getBoundingClientRect(), pointer = new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
       const ray = new THREE.Raycaster(); ray.setFromCamera(pointer, camera);

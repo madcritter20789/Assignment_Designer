@@ -18,7 +18,6 @@ export function createSound() {
   }
   return {
     async toggle() { enabled = !enabled; if (enabled && !await activate()) enabled = false; if (!enabled) { if (gain) gain.gain.value = 0; await context?.suspend(); } return enabled; },
-    enabled: () => enabled,
     gesture() { if (enabled) void activate(); },
     event(type) {
       if (type === 'pull') tone(480, .04, .025);

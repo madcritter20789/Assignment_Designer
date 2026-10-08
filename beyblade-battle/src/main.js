@@ -52,11 +52,9 @@ function commitPull() {
   const power = charge(); cancelPull();
   if (power < .08) { $('status').textContent = 'Launch cancelled. Hold a little longer or pull the ripcord farther.'; sync(); return; }
   audio.gesture(); audio.event('pull');
-  const first = battle.state.phase === 'setupA';
   battle.configureLaunch(aim, power); aim = 0; energy = power;
   if (battle.state.phase === 'countdown' && matchMedia('(max-width: 700px)').matches) stage.scrollIntoView({ block: 'center', behavior: motion.matches ? 'instant' : 'smooth' });
   $('status').textContent = battle.state.phase === 'setupB' ? `Coral staged at ${Math.round(power * 100)} percent power. Now aim and launch teal.` : `Launch confirmed at ${Math.round(power * 100)} percent power. Both tops launch together.`;
-  if (first && battle.state.phase === 'setupB') handle.ariaLabel = 'Pull ripcord to stage teal';
   sync();
 }
 function aimPointer(event) { if (settingUp() && pointer === null && keyStarted === null) aim = boundAim(scene.aim(event, battle.state.phase === 'setupB' ? 1 : 0)); }
@@ -138,8 +136,6 @@ function sync() {
   document.querySelector('.launch-dock').dataset.top = teal ? 'teal' : 'coral';
   document.querySelector('.play-steps').style.setProperty('--active', teal ? 'var(--teal)' : 'var(--coral)');
   $('dock-label').textContent = state?.paused ? 'ON HOLD' : setup ? `YOUR TURN · ${teal ? 'TEAL' : 'CORAL'}` : state?.phase === 'finished' ? 'ROUND COMPLETE' : 'ROUND IN PROGRESS';
-  handle.style.background = teal ? 'var(--teal)' : 'var(--coral)';
-  hold.style.setProperty('--launch-color', teal ? 'var(--teal)' : 'var(--coral)');
   hold.firstChild.textContent = `Hold to ${state?.mode === 'both' ? 'stage' : 'launch'}`;
   handle.ariaLabel = `Pull ripcord to ${state?.mode === 'both' ? 'stage' : 'launch'} ${teal ? 'teal' : 'coral'}`;
   $('top-b-label').textContent = `Teal${mode === 'cpu' ? ' · CPU' : ''}`;

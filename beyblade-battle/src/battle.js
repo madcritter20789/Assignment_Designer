@@ -46,7 +46,6 @@ export async function createBattle() {
     if (state.paused || !['setupA', 'setupB'].includes(state.phase)) return false;
     const index = state.phase === 'setupA' ? 0 : 1;
     state.launches[index] = { angle: boundAim(angle), power: clamp(power) };
-    state.events.push({ type: 'staged', index });
     if (state.mode === 'both' && index === 0) { state.phase = 'setupB'; return true; }
     if (state.mode === 'cpu') state.launches[1] = { angle: boundAim(cpu.angle), power: clamp(cpu.power) };
     state.phase = 'countdown'; state.countdown = .7;
