@@ -10,7 +10,7 @@ const check=(name,value)=>{if(!value)throw Error(name);checks.push(name)};
 const until=async(condition)=>{for(let i=0;i<80;i++){if(condition())return;await wait(100)}throw Error('Timed out waiting for UI state')};
 const key=(type,code)=>$('stage').dispatchEvent(new w.KeyboardEvent(type,{code,bubbles:true}));
 const pull=async()=>{$('stage').focus();key('keydown','Space');await wait(400);key('keyup','Space');await wait(300)};
-await until(()=>$('overlay').hidden);check('initialized and muted',$('sound').getAttribute('aria-pressed')==='false');
+await until(()=>$('overlay').hidden);check('initialized without audio control',!$('sound'));
 check('mandatory shaders active',!$('stage').dataset.shaderFallback&&$('paper-background').querySelector('canvas')&&$('paper-surface').querySelector('canvas'));
 check('Paper rim or fallback',params.has('fallback')?$('paper-rim').dataset.fallback==='true':!!$('paper-rim').querySelector('canvas'));
 check('six visual previews, no selection dropdowns',d.querySelectorAll('.design-card svg.top-preview').length===6&&d.querySelectorAll('select').length===0);

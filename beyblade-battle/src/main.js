@@ -2,12 +2,11 @@ import './style.css';
 import { createBattle, boundAim, clamp, SETTINGS } from './battle.js';
 import { createScene } from './scene.js';
 import { mountRim, mountAtmosphere } from './effects.js';
-import { createSound } from './sound.js';
 import { designCards, TOP_DESIGNS } from './top-previews.js';
 
 const $ = id => document.getElementById(id), stage = $('stage'), handle = $('ripcord');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
-const audio = createSound(), listeners = [];
+const listeners = [];
 const designs = ['strike', 'guard'], desktop = matchMedia('(min-width: 1100px)');
 $('design-a').innerHTML = designCards(0, designs[0]); $('design-b').innerHTML = designCards(1, designs[1]);
 $('round-setup').open = desktop.matches;
@@ -25,7 +24,7 @@ function overlay(kicker, title, note, action, type) {
 function failure(message, fatal) {
   $('status').textContent = message;
   if (!fatal) { stage.dataset.shaderFallback = 'true'; return; }
-  failed = true; cancelPull(); battle?.setPaused(true); audio.update(0, false, true);
+  failed = true; cancelPull(); battle?.setPaused(true);
   overlay('ARENA INTERRUPTED', 'Try again', message, 'Retry', 'retry'); sync();
 }
 function reset() {
@@ -38,7 +37,7 @@ function pause(value) {
   cancelPull(); battle.setPaused(value); accumulator = 0; last = 0;
   if (value) overlay('ROUND PAUSED', 'Paused', 'Your settings and spin are saved.', ['setupA', 'setupB'].includes(battle.state.phase) ? 'Resume setup' : battle.state.phase === 'finished' ? 'View result' : 'Resume battle', 'resume');
   else { $('overlay').hidden = true; if (battle.state.phase === 'finished') showResult(); }
-  audio.update(0, false, value); rim?.update(energy, value, motion.matches, theme, battle.state.result?.winner ?? null); sync();
+  rim?.update(energy, value, motion.matches, theme, battle.state.result?.winner ?? null); sync();
 }
 function showResult() {
   const result = battle.state.result, winner = result.winner === null ? 'A perfect tie.' : result.winner === 0 ? 'Coral takes the arena.' : 'Teal takes the arena.';
@@ -51,7 +50,7 @@ function commitPull() {
   if (!settingUp()) { cancelPull(); return; }
   const power = charge(); cancelPull();
   if (power < .08) { $('status').textContent = 'Launch cancelled. Hold a little longer or pull the ripcord farther.'; sync(); return; }
-  audio.gesture(); audio.event('pull');
+
   battle.configureLaunch(aim, power); aim = 0; energy = power;
   if (battle.state.phase === 'countdown' && matchMedia('(max-width: 700px)').matches) stage.scrollIntoView({ block: 'center', behavior: motion.matches ? 'instant' : 'smooth' });
   $('status').textContent = battle.state.phase === 'setupB' ? `Coral staged at ${Math.round(power * 100)} percent power. Now aim and launch teal.` : `Launch confirmed at ${Math.round(power * 100)} percent power. Both tops launch together.`;
@@ -63,7 +62,7 @@ on(stage, 'pointermove', aimPointer);
 on(handle, 'pointerdown', event => {
   if (!settingUp() || pointer || keyStarted !== null || event.button !== 0) return;
   event.preventDefault(); handle.focus({ preventScroll: true }); handle.setPointerCapture(event.pointerId);
-  pointer = { id: event.pointerId, x: event.clientX }; pull = 0; audio.gesture(); audio.event('pull');
+  pointer = { id: event.pointerId, x: event.clientX }; pull = 0;
 });
 on(handle, 'pointermove', event => { if (pointer?.id === event.pointerId) pull = clamp((event.clientX - pointer.x) / 140); });
 on(handle, 'pointerup', event => { if (pointer?.id === event.pointerId) commitPull(); });
@@ -72,7 +71,7 @@ const hold = $('hold-launch');
 on(hold, 'pointerdown', event => {
   if (!settingUp() || pointer || keyStarted !== null || event.button !== 0) return;
   event.preventDefault(); hold.focus({ preventScroll: true }); hold.setPointerCapture(event.pointerId);
-  holdPointer = event.pointerId; keyStarted = performance.now(); audio.gesture(); audio.event('pull');
+  holdPointer = event.pointerId; keyStarted = performance.now();
 });
 on(hold, 'pointerup', event => { if (holdPointer === event.pointerId) commitPull(); });
 on(hold, 'pointercancel', cancelPull); on(hold, 'lostpointercapture', cancelPull); on(hold, 'blur', cancelPull);
@@ -80,7 +79,7 @@ on($('aim'), 'input', () => { if (settingUp()) aim = boundAim(Number($('aim').va
 function keyboardDown(event) {
   if (!['stage', 'ripcord', 'hold-launch'].includes(event.target.id)) return;
   if (event.code === 'Escape') { cancelPull(); return; }
-  if (event.code === 'Space' || (event.code === 'Enter' && event.target === hold)) { event.preventDefault(); if (settingUp() && !event.repeat && !pointer && keyStarted === null) { keyStarted = performance.now(); audio.gesture(); audio.event('pull'); } }
+  if (event.code === 'Space' || (event.code === 'Enter' && event.target === hold)) { event.preventDefault(); if (settingUp() && !event.repeat && !pointer && keyStarted === null) { keyStarted = performance.now(); } }
   if (['ArrowLeft', 'ArrowRight'].includes(event.code)) { event.preventDefault(); if (settingUp() && keyStarted === null) aim = boundAim(aim + (event.code === 'ArrowLeft' ? -.06 : .06)); }
 }
 on(stage, 'keydown', keyboardDown); on(handle, 'keydown', keyboardDown); on(hold, 'keydown', keyboardDown);
@@ -105,7 +104,6 @@ on($('overlay-action'), 'click', () => {
   if (action === 'again') { reset(); stage.focus(); }
   if (action === 'resume') { pause(false); stage.focus(); }
 });
-on($('sound'), 'click', async () => { const enabled = await audio.toggle(); $('sound').ariaPressed = String(enabled); $('sound').textContent = `Sound ${enabled ? 'on' : 'off'}`; if (enabled) audio.event('pull'); });
 on(window, 'blur', cancelPull);
 on(document, 'visibilitychange', () => { cancelPull(); if (document.hidden && ready() && !battle.state.paused) pause(true); last = 0; accumulator = 0; });
 on(motion, 'change', () => { if (scene) scene.setView($('top').ariaPressed === 'true' ? 'top' : 'angled', motion.matches); });
@@ -175,13 +173,12 @@ function frame(timestamp) {
       energy = Math.max(0, energy - dt * 1.5);
     }
     for (const event of battle.events()) {
-      if (event.type === 'launch') { energy = 1; audio.event('launch'); }
-      if (event.type === 'impact') { energy = Math.max(.6, energy); scene.impact(event, state.time, motion.matches); audio.event('impact'); }
-      if (event.type === 'finish') { energy = .75; audio.event('finish'); showResult(); }
+      if (event.type === 'launch') { energy = 1; }
+      if (event.type === 'impact') { energy = Math.max(.6, energy); scene.impact(event, state.time, motion.matches); }
+      if (event.type === 'finish') { energy = .75; showResult(); }
     }
     const winner = state.result?.winner ?? null;
     scene.render(state, state.paused ? 1 : accumulator / SETTINGS.timestep, charge(), aim, dt, motion.matches);
-    audio.update((state.tops[0].energy + state.tops[1].energy) / 2, state.phase === 'battling', state.paused || document.hidden);
     if (timestamp - lastRim >= 1000 / 30) { rim?.update(Math.max(charge(), energy), state.paused || document.hidden, motion.matches, theme, winner); atmosphere?.update(Math.max(charge(), energy), state.paused || document.hidden, motion.matches, theme); lastRim = timestamp; }
   }
   if (timestamp - lastUi >= 1000 / 30) { sync(); lastUi = timestamp; }
@@ -198,7 +195,7 @@ async function initialize() {
     $('overlay').hidden = true; sync(); raf = requestAnimationFrame(frame);
   } catch (error) { failure('The 3D arena could not start. Check WebGL support and retry.', true); }
 }
-function dispose() { closed = true; cancelAnimationFrame(raf); listeners.forEach(remove => remove()); scene?.dispose(); rim?.dispose(); atmosphere?.dispose(); battle?.dispose(); audio.dispose(); }
+function dispose() { closed = true; cancelAnimationFrame(raf); listeners.forEach(remove => remove()); scene?.dispose(); rim?.dispose(); atmosphere?.dispose(); battle?.dispose(); }
 on(window, 'pagehide', event => { if (!event.persisted) dispose(); else { cancelPull(); if (ready()) pause(true); } });
 if (import.meta.hot) import.meta.hot.dispose(dispose);
 sync();

@@ -16,7 +16,6 @@ The interface centers the stadium between desktop side panels, with mobile-first
 | Three.js | `0.186.1` | 3D stadium and top geometry, lighting, shadows, cameras, toon materials, and custom GLSL shaders. |
 | Rapier (`@dimforge/rapier3d-compat`) | `0.21.0` | WebAssembly collision physics, bouncing, damping, and continuous collision detection. |
 | Paper Shaders (`@paper-design/shaders`) | `0.0.81` | Dithering background, MeshGradient arena backdrop, and reactive PulsingBorder. |
-| Web Audio API | Native browser feature | Synthesized launch, collision, and spin sounds. |
 | Vite | `8.3.3` | Development server, production build, and preview. |
 | Node.js and npm | Node.js 24.x | Dependency management, build tooling, and assertion-based physics tests. |
 | GitHub Actions | CI | Automated tests and production-build verification. |

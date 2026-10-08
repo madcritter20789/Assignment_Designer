@@ -2,19 +2,18 @@
 
 [Source](https://github.com/madcritter20789/Assignment_Designer) · [Live arena](https://assignment-designer-theta.vercel.app).
 
-Two original sculpted tops, one stadium, and a tactile ripcord. Aim in the arena or use the direction slider. Pull right and release, or hold the launch button and release. Play versus the CPU or stage both launches yourself. Coral and teal share the same simulation. Choose Premium Toy or Retro Plastic, angled or top camera, and optional synthesized sound (off initially).
+Two original sculpted tops, one stadium, and a tactile ripcord. Aim in the arena or use the direction slider. Pull right and release, or hold the launch button and release. Play versus the CPU or stage both launches yourself. Coral and teal share the same simulation. Choose Premium Toy or Retro Plastic, angled or top camera.
 
 ## Technologies used
 
 | Technology | Version | What it does in this project |
 |---|---|---|
 | HTML and CSS | Native browser features | Page structure, responsive layout, mobile controls, focus styles, spin meters, and theme colors. |
-| JavaScript | ES modules | Connects input, game rules, rendering, sound, and the user interface. No React or UI framework is required. |
+| JavaScript | ES modules | Connects input, game rules, rendering and the user interface. No React or UI framework is required. |
 | Three.js | `0.186.1` | Renders the 3D stadium and tops, lights, shadows, camera views, particles, and custom materials. Raycasting converts a tap or pointer position into a launch direction. |
 | `@dimforge/rapier3d-compat` | `0.21.0` | Runs the collision simulation using its bundled WebAssembly module. Handles top-to-top contact, stadium walls, bouncing, damping, and continuous collision detection. |
 | `@paper-design/shaders` | `0.0.81` | Renders the dithered page background, gradient arena backdrop, and reactive arena border using WebGL shaders. The cloned repository supplied the integration reference. |
 | Vite | `8.3.3` | Provides the development server, hot reload, production bundling, and local production preview. |
-| Web Audio API | Native browser feature | Generates launch sounds, collision ticks, and a quiet spin hum without downloaded audio files. Sound starts muted. |
 | Node.js | `24` in CI | Runs development tooling and the assertion-based physics checks. |
 | GitHub Actions | Verification workflow | Installs dependencies, runs tests, and checks the production build. |
 
@@ -46,7 +45,7 @@ Arrow keys aim while the arena, ripcord, or hold button is focused. Hold Space t
 
 ## Implementation
 
-Vanilla JavaScript, Three.js 0.186.1, Rapier 0.21.0, Paper Shaders 0.0.81, and Vite 8.3.3. Geometry is procedural; no downloaded models or image assets. `src/battle.js` owns rules and Rapier collisions, `src/scene.js` owns geometry/rendering, and `src/main.js` owns input and UI. Native Web Audio supplies quiet synthetic effects.
+Vanilla JavaScript, Three.js 0.186.1, Rapier 0.21.0, Paper Shaders 0.0.81, and Vite 8.3.3. Geometry is procedural; no downloaded models or image assets. `src/battle.js` owns rules and Rapier collisions, `src/scene.js` owns geometry/rendering, and `src/main.js` owns input and UI.
 
 ### 3D models and materials
 
@@ -73,7 +72,7 @@ The custom Three.js floor shader draws radial markings, charge feedback, top hal
 | Toon-shaded tops | Three.js `MeshToonMaterial` with a generated gradient texture | Produces distinct light/shadow bands for a stylized toy appearance. |
 | Glossy plastic stadium | Three.js `MeshPhysicalMaterial` | Adds clear-coat highlights to the molded housing and floor. |
 
-Paper's separate renderers now provide three effects: a static **Dithering** page background (300,000 pixels), a reactive **MeshGradient** arena backdrop (250,000 pixels), and **PulsingBorder** feedback (400,000 pixels). Uniforms and sizing follow the cloned library's presets. The rim uses decoded noise. Updates are limited to 30 Hz; decorative animation stops at rest, pause, and reduced motion. Three.js caps DPR at 1.5 and resolution at 1.5 million pixels; particles are pooled at 32. Reduced motion also removes decorative wobble, rings, particles, and camera animation. Resource disposal covers renderers, gradient textures, meshes, observers, listeners, audio, and physics.
+Paper's separate renderers now provide three effects: a static **Dithering** page background (300,000 pixels), a reactive **MeshGradient** arena backdrop (250,000 pixels), and **PulsingBorder** feedback (400,000 pixels). Uniforms and sizing follow the cloned library's presets. The rim uses decoded noise. Updates are limited to 30 Hz; decorative animation stops at rest, pause, and reduced motion. Three.js caps DPR at 1.5 and resolution at 1.5 million pixels; particles are pooled at 32. Reduced motion also removes decorative wobble, rings, particles, and camera animation. Resource disposal covers renderers, gradient textures, meshes, observers, listeners, and physics.
 
 ### Responsive controls and fallback
 
@@ -96,7 +95,6 @@ Paper failure uses CSS feedback while retaining the floor shader. Custom shader 
 | `src/battle.js` | Rapier world, colliders, launch parameters, spin energy, collisions, and finish rules. |
 | `src/scene.js` | Three.js renderer, procedural geometry, materials, lighting, cameras, and particles. |
 | `src/effects.js` | Theme palettes, custom floor GLSL, and the three Paper shader integrations. |
-| `src/sound.js` | Synthesized sound effects, audio activation, muting, and cleanup. |
 | `src/top-previews.js` | Original SVG silhouettes and accessible design-selection cards. |
 | `src/style.css` | Desktop/mobile layouts, visual styling, focus states, and reduced-motion styles. |
 | `test.mjs` | Runnable Node assertions using the real Rapier module. |
@@ -111,14 +109,16 @@ Paper failure uses CSS feedback while retaining the floor shader. Custom shader 
 Run the repeatable browser harness at `http://127.0.0.1:5174/checks/browser.html` after `npm run dev`. Append `?width=320&reduced&fallback` for the smallest layout, injected reduced motion, and forced Paper texture failure. The harness is not bundled in production.
 
 - Real-Rapier Node assertions and the production build pass. Rules cover launch/aim bounds, staging, collision response, bounded damage, spin-out, ring-out, simultaneous elimination, timeout, pause, and reset.
-- Headless Microsoft Edge with software WebGL passed the browser harness at desktop, 390 px, and 320 px reduced-motion/fallback. Checks cover both modes, six selectable previews, all design choices, hold/drag cancellation and outside release, keyboard input, synthetic touch input, stage locks, theme/camera preservation, muted audio, repeated reset, bounded canvas count, hidden-tab pause, and context-loss Retry.
+- Headless Microsoft Edge with software WebGL passed the browser harness at desktop, 390 px, and 320 px reduced-motion/fallback. Checks cover both modes, six selectable previews, all design choices, hold/drag cancellation and outside release, keyboard input, synthetic touch input, stage locks, theme/camera preservation, repeated reset, bounded canvas count, hidden-tab pause, and context-loss Retry.
 - Actual Playwright keyboard input staged both tops, completed a spin-out battle, and replayed. Preview rotation, user-controlled preview pause, reduced motion, and paused-state messaging were checked separately.
 - Layouts at 320×740, 375×812, 390×844, 768×1024, 1024×768, 1100×800, 1440×900, 1920×1080, and 844×390 had no horizontal overflow and visible controls at least 44 px high. Doubling root text exposed a 320 px camera-toolbar overflow; allowing that toolbar to wrap fixed the issue. Mobile arena begins approximately 165 px down instead of the previous 597 px at 390×844.
-- Measured software-rendered RAF intervals over 90 samples: desktop median 66.7 ms / p95 175.1 ms; 390 px median 33.4 ms / p95 75.0 ms; 320 px reduced-motion/fallback median 25.0 ms / p95 33.4 ms. These validate behavior, not hardware performance. Physical phones, Safari, screen readers, and audible sound balance remain untested.
+- Measured software-rendered RAF intervals over 90 samples: desktop median 66.7 ms / p95 175.1 ms; 390 px median 33.4 ms / p95 75.0 ms; 320 px reduced-motion/fallback median 25.0 ms / p95 33.4 ms. These validate behavior, not hardware performance. Physical phones, Safari, and screen readers remain untested.
 - The updated Vercel site passed a 390 px live check: six preview cards, both launch modes, pause, theme/camera changes, reset, no overflow, four canvas layers, and no application errors. GitHub verification CI passed for commit `a905bff`.
 - Rapier's bundled WASM makes the main bundle approximately 5 MB / 1.85 MB gzip; Vite reports a size advisory.
 
 GitHub Actions checks tests/build without publishing. Vercel uses root directory `beyblade-battle`, framework Vite, Node.js 24.x, install `npm ci`, build `npm run build`, and output `dist`. The included `vercel.json` supplies build/output settings; the owner manages deployment settings.
+
+Sound controls and synthesis were removed at the owner's request after they reported no audible output. The owner reports good device performance; this is user feedback, not a measured frame-rate result.
 
 ## Submission note
 
@@ -126,7 +126,7 @@ Beyblade Arena turns a familiar spinning-top battle into a small tactile web toy
 
 ## Next explorations
 
-A longer polish pass (approximately 10–12 hours total effort) can refine molded seams, pockets, lighting, contact effects, sound balance, restrained trails, and a separate inspection view using OrbitControls. First test physical phones and Safari, then tune quality from measurements. Keep two modes and the existing rules.
+A longer polish pass (approximately 10–12 hours total effort) can refine molded seams, pockets, lighting, contact effects, optional sound, restrained trails, and a separate inspection view using OrbitControls. First test physical phones and Safari, then tune quality from measurements. Keep two modes and the existing rules.
 
 Experimental realistic physics belongs on a separate branch, starting with one top: unlocked translation/rotation, gravity, a concave stadium, compound tip/body colliders, calibrated mass/inertia/center of mass, real angular velocity, contact friction, and damping. Compare tilted launches, precession, wobble, slowdown, and settling with recorded physical references. Sweep timestep and solver/contact settings before adding the second top. Promote it only after repeatable stability and collision validation; this arcade version remains the submission.
 
